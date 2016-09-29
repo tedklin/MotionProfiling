@@ -1,40 +1,79 @@
 import java.util.Scanner;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  * Trapezoidal motion profile & S-curve motion profile
  * 
- * @author tedfoodlin & vincentviloria
+ * @author tedfoodlin
  *
  */
 
 public class GraphingData {
+	
+	/**
+	 * Input data
+	 */
+	private static Scanner scan = new Scanner(System.in);
+	private static double dist;
+	private static double amax;
+	private static double vmax;
+	private static double clk;
+	
+	/**
+	 * Desired data for motion profiles
+	 * 
+	 * time = x-axis
+	 * x = distance in y-axis
+	 * v = velocity in y-axis
+	 */
+	private static double time;
+	private static double x;
+	private static double v = 0;
+	
+	/**
+	 * Data arrays
+	 */
+	private static ArrayList<Double> timedata = new ArrayList<Double>();
+	private static ArrayList<Double> velocitydata = new ArrayList<Double>();
+	private static ArrayList<Double> distancedata = new ArrayList<Double>();
+	
+	/**
+	 * Extra variables to make file writing easier
+	 */
+	private static int catcher;
+	private static int maxIterations;
+	private static double finalValue;
 
 	public static void main(String[] args) {
-		double time;
+		input();
+		calculateData();
 		
-		//given desired distance, max acceleration, max velocity, and clock speed
-		Scanner scan = new Scanner(System.in);
+		maxIterations = (int)(((vmax/amax)+(dist/vmax))/clk + catcher);
+		finalValue = (double)Math.round((timedata.get(maxIterations-1)+clk)*1000) / 1000;
+		CSVFileWriter csvFileWriter = new CSVFileWriter(maxIterations, timedata, velocitydata, distancedata, finalValue, dist);
+		csvFileWriter.writeToFile();
+	}
+	
+	/**
+	 * Input desired distance, max acceleration, max velocity, clock speed
+	 */
+	public static void input() {
 		System.out.println("Input desired distance");
-		double dist = scan.nextFloat();
+		dist = scan.nextFloat();
 		System.out.println("Input max acceleration");
-		double amax = scan.nextFloat();
+		amax = scan.nextFloat();
 		System.out.println("Input max velocity");
-		double vmax = scan.nextFloat();
+		vmax = scan.nextFloat();
 		System.out.println("Input clock speed");
-		double clk = scan.nextFloat();
-		
-		//initializing desired data for or s-curve motion profiles
-		double x;    		// x = distance in y-axis
-		double v = 0;	 		// v = velocity in y-axis 
-		
-		ArrayList<Double> timedata = new ArrayList<Double>();
-		ArrayList<Double> velocitydata = new ArrayList<Double>();
-		ArrayList<Double> distancedata = new ArrayList<Double>();
-		
-		//calculate data
+		clk = scan.nextFloat();
+		scan.close();
+	}
+	
+	/**
+	 * 3 stages - accelerate, travel at constant velocity, decelerate (that's a funny word)
+	 * Loops through time and adds data for each time interval to arrays
+	 */
+	public static void calculateData() {
 		for (time = 0; time < vmax/amax; time = time + clk){
 			time = (double)Math.round(time * 100000) / 100000;
 			x = (0.5 * amax * Math.pow(time, (double)2));
@@ -44,8 +83,6 @@ public class GraphingData {
 			timedata.add(time);
 			velocitydata.add(v);
 			distancedata.add(x);
-
-
 		}
 		for (time = vmax/amax; time < dist/vmax; time = time + clk){
 			time = (double)Math.round(time * 1000) / 1000;
@@ -56,9 +93,7 @@ public class GraphingData {
 			timedata.add(time);
 			velocitydata.add(v);
 			distancedata.add(x);
-
 		}
-		
 		for (time = dist/vmax; time <= (vmax/amax)+(dist/vmax); time = time + clk){
 			time = (double)Math.round(time * 1000) / 1000;
 			x = (double)(dist - 0.5 * amax * Math.pow((time-((vmax/amax)+(dist/vmax))), 2));
@@ -72,11 +107,12 @@ public class GraphingData {
 				break;
 		}
 		
-		
-		int catcher = 0;
-		int i;
+		/**
+		 * Extra stage to increase accuracy at the end of the third stage
+		 */
+		catcher = 0;
 		//while (v*1000000 >= 0)
-		for (i = 0; v*10000000 >= 0; i++){
+		for (int i = 0; v*10000000 >= 0; i++){
 			time = time+clk;
 			x = (double)(dist - 0.5 * amax * Math.pow((time-((vmax/amax)+(dist/vmax))), 2));
 			v = amax * ((vmax/amax)+(dist/vmax)-time);
@@ -86,51 +122,5 @@ public class GraphingData {
 			System.out.println(v);
 			catcher ++;
 		}
-		System.out.println(catcher); 
-		
-		//Code below based off of Isaac and Ronan's File writer for TBH
-		//Initializes writing to files
-		try {
-			FileWriter writer = new FileWriter("CSV data file.txt");
-			
-			//Headings
-			writer.append("Time");
-			writer.append("\t");
-			writer.append("Velocity");
-			writer.append("\t");
-			writer.append("Distance");
-			writer.append("\r");
-			
-			int a = 0;
-			
-			//Start for loop
-			for(int j = 0; j <= ((vmax/amax)+(dist/vmax))/clk + catcher; j++){
-				
-				//Rows
-				writer.append(String.valueOf(timedata.get(j)));
-				writer.append("\t");
-				writer.append(" "+ String.valueOf(velocitydata.get(j)));
-				writer.append("\t");
-				writer.append(" "+ String.valueOf(distancedata.get(j)));
-				writer.append("\r");
-				a++;
-				
-				
-			}
-			
-			writer.append(String.valueOf((double)Math.round((timedata.get(a-1)+clk)*1000) / 1000));
-			writer.append("\t");
-			writer.append(" "+ 0);
-			writer.append("\t");
-			writer.append(" "+ dist);
-			writer.append("\r");
-			writer.flush();
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		scan.close();
 	}
-
 }
