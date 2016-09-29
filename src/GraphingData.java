@@ -108,7 +108,7 @@ public class GraphingData {
 		}
 		
 		/**
-		 * Extra stage to increase accuracy at the end of the third stage
+		 * Extra failsafe for last stage
 		 */
 		catcher = 0;
 		//while (v*1000000 >= 0)
@@ -119,7 +119,7 @@ public class GraphingData {
 			timedata.add(time);
 			velocitydata.add(v);
 			distancedata.add(x);
-			System.out.println(v);
+			System.out.println("Catcher value: " + catcher);
 			catcher ++;
 		}
 	}

@@ -40,7 +40,7 @@ public class CSVFileWriter {
 			writer.append("\r");
 			
 			//Start for loop
-			for(int j = 0; j <= m_maxIterations; j++){
+			for(int j = 0; j <= m_maxIterations-1; j++){
 				//Rows
 				writer.append(String.valueOf(m_xAxisArray.get(j)));
 				writer.append("\t");
