@@ -18,6 +18,23 @@ public class CSVFileWriter {
 	private static double m_finalValue;
 	private static double m_dist;
 	
+	/**
+	 * File writer constructor
+	 * 
+	 * @param maxIterations
+	 * @param xAxisArray
+	 * @param yAxisArray1
+	 * @param yAxisArray2
+	 * @param finalValue
+	 * @param dist
+	 * 
+	 * For use with motion profiling:
+	 * 	xAxisArray = time
+	 *  yAxisArray1 = velocity
+	 *  yAxisArray2 = distance
+	 *  finalValue and dist for tolerance at the end
+	 * 
+	 */
 	public CSVFileWriter(double maxIterations, ArrayList<Double> xAxisArray, ArrayList<Double> yAxisArray1, ArrayList<Double> yAxisArray2, double finalValue, double dist) {
 		m_maxIterations = maxIterations;
 		m_xAxisArray = xAxisArray;
@@ -27,6 +44,10 @@ public class CSVFileWriter {
 		m_dist = dist;
 	}
 	
+	/**
+	 * Writes to a text file with 3 columns and tabs separating each column
+	 * Copy and paste from text file to Excel to graph
+	 */
 	public void writeToFile(){
 		try {
 			FileWriter writer = new FileWriter("CSV data file.txt");
