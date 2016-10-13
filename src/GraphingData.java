@@ -2,7 +2,7 @@ import java.util.Scanner;
 import java.util.ArrayList;
 
 /**
- * Trapezoidal motion profile & S-curve motion profile
+ * Trapezoidal motion profile & S-curve motion profile 
  * 
  * @author tedfoodlin
  *
