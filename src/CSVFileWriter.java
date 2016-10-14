@@ -50,13 +50,13 @@ public class CSVFileWriter {
 	 */
 	public void writeToFile(){
 		try {
-			FileWriter writer = new FileWriter("CSV data file.txt");
+			FileWriter writer = new FileWriter("CSV data file.csv");
 			
 			//Headings
 			writer.append("Time");
-			writer.append("\t");
+			writer.append(",");
 			writer.append("Velocity");
-			writer.append("\t");
+			writer.append(",");
 			writer.append("Distance");
 			writer.append("\r");
 			
@@ -64,18 +64,18 @@ public class CSVFileWriter {
 			for(int j = 0; j <= m_maxIterations-1; j++){
 				//Rows
 				writer.append(String.valueOf(m_xAxisArray.get(j)));
-				writer.append("\t");
-				writer.append(" "+ String.valueOf(m_yAxisArray1.get(j)));
-				writer.append("\t");
-				writer.append(" "+ String.valueOf(m_yAxisArray2.get(j)));
+				writer.append(",");
+				writer.append(String.valueOf(m_yAxisArray1.get(j)));
+				writer.append(",");
+				writer.append(String.valueOf(m_yAxisArray2.get(j)));
 				writer.append("\r");
 			}
 			
 			writer.append(String.valueOf(m_finalValue));
-			writer.append("\t");
-			writer.append(" "+ 0);
-			writer.append("\t");
-			writer.append(" "+ m_dist);
+			writer.append(",");
+			writer.append(""+ 0);
+			writer.append(",");
+			writer.append(""+ m_dist);
 			writer.append("\r");
 			writer.flush();
 			writer.close();
