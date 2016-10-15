@@ -6,8 +6,11 @@ import java.util.ArrayList;
  * File writer for CSV data
  * 1 x-axis array and 2 y-axis arrays
  * 
- * @author tedfoodlin
- * Based off of file writer by isaacaddis (Isaac Addis) and lostsamurai (Ronan Konishi)
+ * @author Isaac Addis
+ * @author Ronan Konishi
+ * 
+ * Modified by tedfoodlin
+ * 
  */
 public class CSVFileWriter {
 	
@@ -44,13 +47,9 @@ public class CSVFileWriter {
 		m_dist = dist;
 	}
 	
-	/**
-	 * Writes to a text file with 3 columns and tabs separating each column
-	 * Copy and paste from text file to Excel to graph
-	 */
 	public void writeToFile(){
 		try {
-			FileWriter writer = new FileWriter("CSV data file.csv");
+			FileWriter writer = new FileWriter("MotionProfilingData.csv");
 			
 			//Headings
 			writer.append("Time");

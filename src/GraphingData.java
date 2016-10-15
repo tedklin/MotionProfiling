@@ -13,11 +13,11 @@ public class GraphingData {
 	/**
 	 * Input data
 	 */
-	private static Scanner scan = new Scanner(System.in);
-	private static double dist;
-	private static double amax;
-	private static double vmax;
-	private static double clk;
+	public static Scanner scan = new Scanner(System.in);
+	public static double dist;
+	public static double amax;
+	public static double vmax;
+	public static double clk;
 	
 	/**
 	 * Desired data for motion profiles
@@ -26,23 +26,23 @@ public class GraphingData {
 	 * x = distance in y-axis
 	 * v = velocity in y-axis
 	 */
-	private static double time;
-	private static double x;
-	private static double v = 0;
+	public static double time;
+	public static double x;
+	public static double v = 0;
 	
 	/**
 	 * Data arrays
 	 */
-	private static ArrayList<Double> timedata = new ArrayList<Double>();
-	private static ArrayList<Double> velocitydata = new ArrayList<Double>();
-	private static ArrayList<Double> distancedata = new ArrayList<Double>();
+	public static ArrayList<Double> timedata = new ArrayList<Double>();
+	public static ArrayList<Double> velocitydata = new ArrayList<Double>();
+	public static ArrayList<Double> distancedata = new ArrayList<Double>();
 	
 	/**
 	 * Extra variables to make file writing easier
 	 */
-	private static int catcher;
-	private static int maxIterations;
-	private static double finalValue;
+	public static int catcher;
+	public static int maxIterations;
+	public static double finalValue;
 
 	public static void main(String[] args) {
 		input();
@@ -70,11 +70,24 @@ public class GraphingData {
 	}
 	
 	/**
-	 * 3 stages - accelerate, travel at constant velocity, decelerate (that's a funny word)
+	 * Checks if the maximum velocity can actually be reached
+	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach
+	 */
+	public static void checkMaxV() {
+		double mid = dist/2;
+		double vFinal = Math.pow(2 * amax * mid, 0.5);
+		if (vFinal < vmax){
+			vmax = vFinal;
+		}
+	}
+
+	/**
+	 * 3 stages - accelerate, travel at constant velocity, decelerate
 	 * Loops through time and adds data for each time interval to arrays
 	 */
 	public static void calculateData() {
-		for (time = 0; time < vmax/amax; time = time + clk){
+		checkMaxV();
+		for (time = 0; time < (vmax/amax); time = time + clk){
 			time = (double)Math.round(time * 100000) / 100000;
 			x = (0.5 * amax * Math.pow(time, (double)2));
 			x = (double)Math.round(x * 100000) / 100000;
@@ -84,7 +97,7 @@ public class GraphingData {
 			velocitydata.add(v);
 			distancedata.add(x);
 		}
-		for (time = vmax/amax; time < dist/vmax; time = time + clk){
+		for (time = vmax/amax; time < (dist/vmax); time = time + clk){
 			time = (double)Math.round(time * 1000) / 1000;
 			x = (0.5 * (Math.pow(vmax, 2) / amax)) + (vmax * (time - (vmax/amax)));
 			x = (double)Math.round(x * 100000) / 100000;
@@ -94,7 +107,7 @@ public class GraphingData {
 			velocitydata.add(v);
 			distancedata.add(x);
 		}
-		for (time = dist/vmax; time <= (vmax/amax)+(dist/vmax); time = time + clk){
+		for (time = dist/vmax; time <= ((vmax/amax)+(dist/vmax)); time = time + clk){
 			time = (double)Math.round(time * 1000) / 1000;
 			x = (double)(dist - 0.5 * amax * Math.pow((time-((vmax/amax)+(dist/vmax))), 2));
 			x = (double)Math.round(x * 100000) / 100000;
@@ -107,9 +120,7 @@ public class GraphingData {
 				break;
 		}
 		
-		/**
-		 * Extra failsafe for last stage
-		 */
+		//extra failsafe for last step
 		catcher = 0;
 		//while (v*1000000 >= 0)
 		for (int i = 0; v*10000000 >= 0; i++){
