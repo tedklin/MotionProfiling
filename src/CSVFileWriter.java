@@ -63,7 +63,7 @@ public class CSVFileWriter {
 			writer.append("\r");
 			
 			//Start for loop
-			for(int j = 0; j <= maxIterations-1; j++){
+			for(int j = 0; j <= maxIterations - 1; j++){
 				//Rows
 				writer.append(String.valueOf(m_xAxisArray.get(j)));
 				writer.append(",");
@@ -75,14 +75,17 @@ public class CSVFileWriter {
 				writer.append("\r");
 			}
 			
-			writer.append(String.valueOf(m_finalValue));
-			writer.append(",");
-			writer.append(""+ 0);
-			writer.append(",");
-			writer.append(""+ m_dist);
-			writer.append(",");
-			writer.append("");
-			writer.append("\r");
+			if (m_yAxisArray2.get(maxIterations - 1) != m_dist) {
+				writer.append(String.valueOf(m_finalValue));
+				writer.append(",");
+				writer.append(""+ 0);
+				writer.append(",");
+				writer.append(""+ m_dist);
+				writer.append(",");
+				writer.append("" + 0);
+				writer.append("\r");
+			}
+			
 			writer.flush();
 			writer.close();
 		} catch (IOException e) {

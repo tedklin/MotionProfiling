@@ -262,8 +262,8 @@ public class GraphingData {
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
-		System.out.println("Time to finish motion: " + time);
-		return time;
+		System.out.println("Time to finish motion: " + total_time);
+		return total_time;
 	}
 	
 	/**
