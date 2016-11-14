@@ -61,15 +61,16 @@ public class GraphingData {
 		mode = scan.nextInt();
 		if (mode == 1) {
 			a_avg = 0.5 * a_max;
+			jerk = (Math.pow(a_max, 2) * a_avg) / (vmax * (a_max - a_avg));
 		} else if (mode == 2) {
 			a_avg = a_max;
+			jerk = 0;
 		}
 		System.out.println("Input max velocity");
 		vmax = scan.nextFloat();
 		System.out.println("Input clock speed");
 		clk = scan.nextFloat();
 		scan.close();
-		jerk = (Math.pow(a_max, 2) * a_avg) / (vmax * (a_max - a_avg));
 	}
 	
 	/**
@@ -157,12 +158,12 @@ public class GraphingData {
 		System.out.println("t2: " + t2);
 		double t3 = vmax/a_avg;
 		System.out.println("t3: " + t3);
-		double v1 = Math.pow(a_max, 2)/(2 * jerk);
+		double v1 = (jerk * Math.pow(t1, 2))/2;
 		
 		/**
 		 * S-curve acceleration
 		 */
-		for (time = 0; time < t1; time += clk) {
+		for (time = 0; time <= t1; time += clk) {
 			time = roundTime(time);
 			acceleration = jerk * time;
 			acceleration = round(acceleration);
@@ -172,19 +173,19 @@ public class GraphingData {
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
-		for (time = t1; time < t2; time += clk) {
+		for (time = t1 + clk; time <= t2; time += clk) {
 			time = roundTime(time);
-			acceleration = a_avg;
+			acceleration = a_max;
 			acceleration = round(acceleration);
-			v = ((Math.pow(a_avg, 2) / (2 * jerk))) + a_avg * (time - t1);
+			v = ((Math.pow(a_max, 2) / (2 * jerk))) + a_max * (time - t1);
 			v = round(v);
-			x = ((jerk * Math.pow(t1, 3))/6) + ((a_avg * Math.pow((time - t1), 2) / 2) + (v1 * (time - t1)));
+			x = ((jerk * Math.pow(t1, 3))/6) + ((a_max * Math.pow((time - t1), 2) / 2) + (v1 * (time - t1)));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
-		for (time = t2; time <= t3; time += clk) {
+		for (time = t2 + clk; time <= t3; time += clk) {
 			time = roundTime(time);
-			acceleration = a_avg - (jerk * (time - t2));
+			acceleration = a_max - (jerk * (time - t2));
 			acceleration = round(acceleration);
 			v = vmax - ((jerk * Math.pow((t3 - time), 2)) / 2);
 			v = round(v);
@@ -210,11 +211,11 @@ public class GraphingData {
 		
 		for (time = t3; time < end_of_second_stage; time += clk){
 			time = roundTime(time);
-			x = (0.5 * (Math.pow(vmax, 2) / a_avg)) + (vmax * (time - (vmax/a_avg)));
+			x = (0.5 * (Math.pow(vmax, 2) / a_max)) + (vmax * (time - (vmax/a_max)));
 			x = round(x);
 			v = (vmax);
 			v = round(v);
-			addData(time, v, x, a_max);
+			addData(time, v, x, 0);
 		}
 		
 		/**
@@ -227,8 +228,8 @@ public class GraphingData {
 			time = roundTime(time);
 			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = roundTime(total_time - time);
-			acceleration = a_avg - (jerk * (velocity_time_reference - t2));
-			acceleration = round(acceleration);
+			acceleration = a_max - (jerk * (velocity_time_reference - t2));
+			acceleration = -round(acceleration);
 			v = vmax - ((jerk * Math.pow((t3 - velocity_time_reference), 2)) / 2);
 			v = round(v);
 			x = (jerk * Math.pow(position_time_reference, 3))/6;
@@ -240,11 +241,11 @@ public class GraphingData {
 			time = roundTime(time);
 			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = roundTime(total_time - time);
-			acceleration = a_avg;
-			acceleration = round(acceleration);
-			v = ((Math.pow(a_avg, 2) / (2 * jerk))) + a_avg * (velocity_time_reference - t1);
+			acceleration = a_max;
+			acceleration = -round(acceleration);
+			v = ((Math.pow(a_max, 2) / (2 * jerk))) + a_max * (velocity_time_reference - t1);
 			v = round(v);
-			x = ((jerk * Math.pow(t1, 3))/6) + ((a_avg * Math.pow((position_time_reference - t1), 2) / 2) + (v1 * (position_time_reference - t1)));
+			x = ((jerk * Math.pow(t1, 3))/6) + ((a_max * Math.pow((position_time_reference - t1), 2) / 2) + (v1 * (position_time_reference - t1)));
 			x += distance_after_second_stage;
 			x = round(x);
 			addData(time, v, x, acceleration);
@@ -254,7 +255,7 @@ public class GraphingData {
 			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = total_time - time;
 			acceleration = jerk * velocity_time_reference;
-			acceleration = round(acceleration);
+			acceleration = -round(acceleration);
 			v = (jerk * Math.pow(velocity_time_reference, 2))/2;
 			v = round(v);
 			x = (Math.pow(vmax, 2)) / (2 * a_avg) + ((jerk * (Math.pow(jerk * (t3 - position_time_reference), 2)) / 6) - (vmax * (t3 - position_time_reference)));
