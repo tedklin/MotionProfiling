@@ -34,17 +34,20 @@ public class GraphingData {
 //		input();
 		setTestingValues();
 		
+		String name = null;
 		double final_time = 0;
 		if (mode == 1) {
 			final_time = scurveCalculations();
-		}
+			name = "SCurveProfile.csv";
+		} 
 		else if (mode == 2) {
 			final_time = trapezoidalCalculations();
-		}
+			name = "TrapezoidalProfile.csv";
+		} 
 		System.out.println("Calculations finished");
 		
 		double finalValue = (double)Math.round(final_time * 1000) / 1000;
-		CSVFileWriter csvFileWriter = new CSVFileWriter(time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
+		CSVFileWriter csvFileWriter = new CSVFileWriter(name, time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
 		csvFileWriter.writeToFile();
 		System.out.println("Profile generated");
 	}
@@ -117,7 +120,7 @@ public class GraphingData {
 				x = round(x);
 				v = (vmax);
 				v = round(v);
-				addData(time, v, x, a_max);
+				addData(time, v, x, 0);
 			}
 		}
 		double cruisingDist = distance_data.get(distance_data.size()-1) - accelDist;
@@ -148,17 +151,16 @@ public class GraphingData {
 	 */
 	public static double scurveCalculations() {
 		double time;
-		double acceleration;
+		double acceleration = 0;
 		double x = 0;
 		double v = 0;
 				
 		double t1 = a_max/jerk;
 		System.out.println("t1: " + t1);
-		double t2 = (vmax/a_avg) - (a_max/jerk);
+		double t2 = (vmax/a_avg) - t1;
 		System.out.println("t2: " + t2);
 		double t3 = vmax/a_avg;
 		System.out.println("t3: " + t3);
-		double v1 = (jerk * Math.pow(t1, 2))/2;
 		
 		/**
 		 * S-curve acceleration
@@ -173,26 +175,34 @@ public class GraphingData {
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		double v1 = v;
+		double p1 = x;
+		double a1 = acceleration;
 		for (time = t1 + clk; time <= t2; time += clk) {
 			time = roundTime(time);
 			acceleration = a_max;
 			acceleration = round(acceleration);
 			v = ((Math.pow(a_max, 2) / (2 * jerk))) + a_max * (time - t1);
 			v = round(v);
-			x = ((jerk * Math.pow(t1, 3))/6) + ((a_max * Math.pow((time - t1), 2) / 2) + (v1 * (time - t1)));
+			x = p1 + (v1 * (time - t1)) + (0.5 * a1 * Math.pow((time - t1), 2));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		double v2 = v;
+		double p2 = x;
+		double a2 = acceleration;
 		for (time = t2 + clk; time <= t3; time += clk) {
 			time = roundTime(time);
 			acceleration = a_max - (jerk * (time - t2));
 			acceleration = round(acceleration);
 			v = vmax - ((jerk * Math.pow((t3 - time), 2)) / 2);
 			v = round(v);
-			x = (Math.pow(vmax, 2)) / (2 * a_avg) + ((jerk * (Math.pow(jerk * (t3 - time), 2)) / 6) - (vmax * (t3 - time)));
+			x = p2 + (v2 * (time - t2)) + (0.5 * a2 * Math.pow((time - t2), 2)) + (1/6 * -jerk * Math.pow((time - t2), 3));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		double v3 = v;
+		double p3 = x; 
 		double distance_to_accelerate = (Math.pow(vmax, 2)) / (2 * a_avg);
 		System.out.println("Distance to accelerate " + distance_to_accelerate);
 		double time_to_accelerate = t3;
@@ -211,58 +221,63 @@ public class GraphingData {
 		
 		for (time = t3; time < end_of_second_stage; time += clk){
 			time = roundTime(time);
-			x = (0.5 * (Math.pow(vmax, 2) / a_max)) + (vmax * (time - (vmax/a_max)));
+			x = p3 + v3 * (time - t3);
 			x = round(x);
 			v = (vmax);
 			v = round(v);
 			addData(time, v, x, 0);
 		}
+		double v4 = v;
+		double p4 = distance_after_second_stage;
+		double t4 = end_of_second_stage;
 		
 		/**
 		 * S-curve deceleration
 		 */
 		double total_time = end_of_second_stage + time_to_accelerate;
 		double velocity_time_reference;
-		double position_time_reference;
 		for (time = end_of_second_stage; time < end_of_second_stage + t1; time += clk) {
 			time = roundTime(time);
-			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = roundTime(total_time - time);
 			acceleration = a_max - (jerk * (velocity_time_reference - t2));
 			acceleration = -round(acceleration);
 			v = vmax - ((jerk * Math.pow((t3 - velocity_time_reference), 2)) / 2);
 			v = round(v);
-			x = (jerk * Math.pow(position_time_reference, 3))/6;
-			x += distance_after_second_stage;
+			x = p4 + (v4 * (time - t4)) + (1/6 * -jerk * Math.pow((time - t4), 3));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		double v5 = v;
+		double p5 = x;
+		double a5 = acceleration;
+		double t5 = time;
 		for (time = end_of_second_stage + t1; time < end_of_second_stage + t2; time += clk) {
 			time = roundTime(time);
-			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = roundTime(total_time - time);
 			acceleration = a_max;
 			acceleration = -round(acceleration);
 			v = ((Math.pow(a_max, 2) / (2 * jerk))) + a_max * (velocity_time_reference - t1);
 			v = round(v);
-			x = ((jerk * Math.pow(t1, 3))/6) + ((a_max * Math.pow((position_time_reference - t1), 2) / 2) + (v1 * (position_time_reference - t1)));
-			x += distance_after_second_stage;
+			x = p5 + (v5 * (time - t5)) + (0.5 * a5 * Math.pow((time - t5), 2));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		double v6 = v;
+		double p6 = x;
+		double a6 = acceleration;
+		double t6 = time;
 		for (time = end_of_second_stage + t2; time <= total_time; time += clk) {
 			time = roundTime(time);
-			position_time_reference = time - end_of_second_stage;
 			velocity_time_reference = total_time - time;
 			acceleration = jerk * velocity_time_reference;
 			acceleration = -round(acceleration);
 			v = (jerk * Math.pow(velocity_time_reference, 2))/2;
 			v = round(v);
-			x = (Math.pow(vmax, 2)) / (2 * a_avg) + ((jerk * (Math.pow(jerk * (t3 - position_time_reference), 2)) / 6) - (vmax * (t3 - position_time_reference)));
-			x += distance_after_second_stage;
+			x = p6 + (v6 * (time - t6)) + (0.5 * a6 * Math.pow((time - t6), 2)) + (1/6 * jerk * Math.pow((time - t6), 3));
 			x = round(x);
 			addData(time, v, x, acceleration);
 		}
+		
 		System.out.println("Time to finish motion: " + total_time);
 		return total_time;
 	}
