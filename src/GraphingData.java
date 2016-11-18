@@ -81,13 +81,12 @@ public class GraphingData {
 	 */
 	public static void setTestingValues() {
 		scan.close();
-		distance = 200;
+		distance = 100;
 		a_max = 5;
-		mode = 1;
+		mode = 2;
 		a_avg = 2.5;
 		vmax = 10;
 		clk = 0.1;
-		jerk = (Math.pow(a_max, 2) * a_avg) / (vmax * (a_max - a_avg));
 		jerk = Math.pow(a_max, 2) / vmax;
 	}
 
@@ -133,7 +132,7 @@ public class GraphingData {
 			x = round(x);
 			v = a_max * ((vmax/a_max)+(distance/vmax)-time);
 			v = round(v);
-			addData(time, v, x, a_max);
+			addData(time, v, x, -a_max);
 			if (v < 0)
 				break;
 		}
@@ -184,7 +183,6 @@ public class GraphingData {
 		double t7 = tv + ta + tj;
 		System.out.println("t7: " + t7);
 
-		
 		/**
 		 * S-curve acceleration
 		 */
