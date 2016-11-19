@@ -34,15 +34,22 @@ public class GraphingData {
 	public static void main(String[] args) {
 //		input();
 		setTestingValues();
+		System.out.println("Desired Distance: " + distance);
+		System.out.println("Max Acceleration: " + maxAccel);
+		System.out.println("Max Deceleration: " + maxDecel);
+		System.out.println("Max Velocity: " + maxVelocity);
+		System.out.println("Clock speed: " + clk);
 		
 		String name = null;
 		double final_time = 0;
 		if (mode == 1) {
 			final_time = scurveCalculations();
+			System.out.println("S Curve Motion Profile");
 			name = "SCurveProfile.csv";
 		} 
 		else if (mode == 2) {
 			final_time = trapezoidalCalculations();
+			System.out.println("Trapezoidal Motion Profile");
 			name = "TrapezoidalProfile.csv";
 		} 
 		System.out.println("Calculations finished");
@@ -106,42 +113,37 @@ public class GraphingData {
 		double x;
 		double v = 0;
 		
+		double accelTime = maxVelocity/maxAccel;
+		System.out.println("Acceleration Time: " + accelTime);
+		double accelAndCruiseTime = distance/maxVelocity;
+		System.out.println("Acceleration + Cruise Time: " + accelAndCruiseTime);
+		double decelTime = -maxVelocity/maxDecel;
+		System.out.println("Deceleration Time: " + decelTime);
+		double end = accelAndCruiseTime + decelTime;
+		System.out.println("Expected End Time: " + end);
+		
 		boolean isTriangular = isTriangular();
-		for (time = 0; time < (maxVelocity/maxAccel); time += clk){
-			time = roundTime(time);
+		for (time = 0; time < accelTime; time += clk){
 			x = (0.5 * maxAccel * Math.pow(time, (double)2));
-			x = round(x);
 			v = maxAccel * time;
-			v = round(v);
 			addData(time, v, x, maxAccel);
 		}
-		double accelDist = distance_data.get(distance_data.size()-1);
-		double accelTime = time_data.get(time_data.size()-1);
-		System.out.println("Distance to accelerate: " + accelDist);
-		System.out.println("Time to accelerate: " + accelTime);
 		if (isTriangular == false){
-			for (time = maxVelocity/maxAccel; time < (distance/maxVelocity); time += clk){
-				time = roundTime(time);
+			for (time = accelTime; time < accelAndCruiseTime; time += clk){
 				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
-				x = round(x);
 				v = (maxVelocity);
-				v = round(v);
 				addData(time, v, x, 0);
 			}
 		}
-		double cruisingDist = distance_data.get(distance_data.size() - 1);
-		System.out.println("Cruising distance: " + cruisingDist);
-		double end_of_second_stage = distance/maxVelocity;
-		double end = (maxVelocity/maxAccel) + (distance/maxVelocity);
-		for (time = end_of_second_stage; time <= end; time += clk){
-			time = roundTime(time);
+		for (time = accelAndCruiseTime; time <= end; time += clk){
 			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
-			x = round(x);
-			v = maxVelocity + maxDecel * (time - end_of_second_stage);
-			v = round(v);
+			v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
+			if (v < 0.0001) {
+				v = 0;
+			}
 			addData(time, v, x, maxDecel);
 		}
-		System.out.println("Time to finish motion: " + time);
+		System.out.println("Actual time to finish motion: " + time);
 		return time;
 	}
 	
