@@ -122,13 +122,13 @@ public class GraphingData {
 		double end = accelAndCruiseTime + decelTime;
 		System.out.println("Expected End Time: " + end);
 		
-		boolean isTriangular = isTriangular();
+		boolean triangular = isTriangular();
 		for (time = 0; time < accelTime; time += clk){
 			x = (0.5 * maxAccel * Math.pow(time, (double)2));
 			v = maxAccel * time;
 			addData(time, v, x, maxAccel);
 		}
-		if (isTriangular == false){
+		if (triangular == false){
 			for (time = accelTime; time < accelAndCruiseTime; time += clk){
 				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
 				v = (maxVelocity);
@@ -341,14 +341,14 @@ public class GraphingData {
 	
 	/**
 	 * Check if the maximum velocity can actually be reached
-	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach
+	 * If the maximum velocity can't be reached, adjust it to the final velocity that it can reach with some tolerance
 	 * Maximum velocity can't be reached = triangular motion profile
 	 */
 	public static boolean isTriangular() {
 		double mid = distance/2;
 		double vFinal = Math.pow(2 * maxAccel * mid, 0.5);
 		if (vFinal < maxVelocity){
-			maxVelocity = vFinal;
+			maxVelocity = vFinal - (maxVelocity/10);
 			return true;
 		} else {
 			return false;
