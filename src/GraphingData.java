@@ -15,9 +15,10 @@ public class GraphingData {
 	 */
 	public static Scanner scan = new Scanner(System.in);
 	public static double distance;
-	public static double a_max;
+	public static double maxAccel;
+	public static double maxDecel;
 	public static double a_avg;
-	public static double vmax;
+	public static double maxVelocity;
 	public static double clk;
 	public static double jerk;
 	public static int mode;
@@ -59,18 +60,20 @@ public class GraphingData {
 		System.out.println("Input desired distance");
 		distance = scan.nextFloat();
 		System.out.println("Input max acceleration");
-		a_max = scan.nextFloat();
+		maxAccel = scan.nextFloat();
+		System.out.println("Input max deceleration");
+		maxDecel = scan.nextFloat();
 		System.out.println("Input mode (1 for pure s-curve, 2 for trapezoidal)");
 		mode = scan.nextInt();
 		if (mode == 1) {
-			a_avg = 0.5 * a_max;
-			jerk = (Math.pow(a_max, 2) * a_avg) / (vmax * (a_max - a_avg));
+			a_avg = 0.5 * maxAccel;
+			jerk = (Math.pow(maxAccel, 2) * a_avg) / (maxVelocity * (maxAccel - a_avg));
 		} else if (mode == 2) {
-			a_avg = a_max;
+			a_avg = maxAccel;
 			jerk = 0;
 		}
 		System.out.println("Input max velocity");
-		vmax = scan.nextFloat();
+		maxVelocity = scan.nextFloat();
 		System.out.println("Input clock speed");
 		clk = scan.nextFloat();
 		scan.close();
@@ -82,12 +85,13 @@ public class GraphingData {
 	public static void setTestingValues() {
 		scan.close();
 		distance = 100;
-		a_max = 5;
+		maxAccel = 5;
+		maxDecel = -5;
 		mode = 2;
-		a_avg = 2.5;
-		vmax = 10;
+		a_avg = maxAccel;
+		maxVelocity = 10;
 		clk = 0.1;
-		jerk = Math.pow(a_max, 2) / vmax;
+		jerk = Math.pow(maxAccel, 2) / maxVelocity;
 	}
 
 	/**
@@ -103,38 +107,39 @@ public class GraphingData {
 		double v = 0;
 		
 		boolean isTriangular = isTriangular();
-		for (time = 0; time < (vmax/a_max); time += clk){
+		for (time = 0; time < (maxVelocity/maxAccel); time += clk){
 			time = roundTime(time);
-			x = (0.5 * a_max * Math.pow(time, (double)2));
+			x = (0.5 * maxAccel * Math.pow(time, (double)2));
 			x = round(x);
-			v = a_max * time;
+			v = maxAccel * time;
 			v = round(v);
-			addData(time, v, x, a_max);
+			addData(time, v, x, maxAccel);
 		}
 		double accelDist = distance_data.get(distance_data.size()-1);
-		System.out.println("Distance to accelerate/decelerate: " + accelDist);
+		double accelTime = time_data.get(time_data.size()-1);
+		System.out.println("Distance to accelerate: " + accelDist);
+		System.out.println("Time to accelerate: " + accelTime);
 		if (isTriangular == false){
-			for (time = vmax/a_max; time < (distance/vmax); time += clk){
+			for (time = maxVelocity/maxAccel; time < (distance/maxVelocity); time += clk){
 				time = roundTime(time);
-				x = (0.5 * (Math.pow(vmax, 2) / a_max)) + (vmax * (time - (vmax/a_max)));
+				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
 				x = round(x);
-				v = (vmax);
+				v = (maxVelocity);
 				v = round(v);
 				addData(time, v, x, 0);
 			}
 		}
-		double cruisingDist = distance_data.get(distance_data.size()-1) - accelDist;
+		double cruisingDist = distance_data.get(distance_data.size() - 1);
 		System.out.println("Cruising distance: " + cruisingDist);
-		double end_of_second_stage = (vmax/a_max) + (distance/vmax);
-		for (time = distance/vmax; time <= end_of_second_stage; time += clk){
+		double end_of_second_stage = distance/maxVelocity;
+		double end = (maxVelocity/maxAccel) + (distance/maxVelocity);
+		for (time = end_of_second_stage; time <= end; time += clk){
 			time = roundTime(time);
-			x = (double)(distance - 0.5 * a_max * Math.pow((time-((vmax/a_max)+(distance/vmax))), 2));
+			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
 			x = round(x);
-			v = a_max * ((vmax/a_max)+(distance/vmax)-time);
+			v = maxVelocity + maxDecel * (time - end_of_second_stage);
 			v = round(v);
-			addData(time, v, x, -a_max);
-			if (v < 0)
-				break;
+			addData(time, v, x, maxDecel);
 		}
 		System.out.println("Time to finish motion: " + time);
 		return time;
@@ -159,13 +164,13 @@ public class GraphingData {
 		double ta;
 		double tv;
 		if (mode == 1) {
-			tj = Math.pow((vmax/jerk), 0.5);
+			tj = Math.pow((maxVelocity/jerk), 0.5);
 			ta = tj;
-			tv = distance/vmax;
+			tv = distance/maxVelocity;
 		} else {
-			tj = a_max/jerk;
-			ta = vmax/a_max;
-			tv = distance/vmax;
+			tj = maxAccel/jerk;
+			ta = maxVelocity/maxAccel;
+			tv = distance/maxVelocity;
 		}
 		
 		double t1 = tj;
@@ -201,9 +206,9 @@ public class GraphingData {
 		double a1 = acceleration;
 		for (time = t1 + clk; time <= t2; time += clk) {
 			time = roundTime(time);
-			acceleration = a_max;
+			acceleration = maxAccel;
 			acceleration = round(acceleration);
-			v = ((Math.pow(a_max, 2) / (2 * jerk))) + a_max * (time - t1);
+			v = ((Math.pow(maxAccel, 2) / (2 * jerk))) + maxAccel * (time - t1);
 			v = v1 + (a1 * (time - t1));
 			v = round(v);
 			x = p1 + (v1 * (time - t1)) + (0.5 * a1 * Math.pow((time - t1), 2));
@@ -215,9 +220,9 @@ public class GraphingData {
 		double a2 = acceleration;
 		for (time = t2 + clk; time <= t3; time += clk) {
 			time = roundTime(time);
-			acceleration = a_max - (jerk * (time - t2));
+			acceleration = maxAccel - (jerk * (time - t2));
 			acceleration = round(acceleration);
-			v = vmax - ((jerk * Math.pow((t3 - time), 2)) / 2);
+			v = maxVelocity - ((jerk * Math.pow((t3 - time), 2)) / 2);
 			v = v2 + (a2 * (time - t2)) + (0.5 * -jerk * Math.pow((time - t2), 2));
 			v = round(v);
 			x = p2 + (v2 * (time - t2)) + (0.5 * a2 * Math.pow((time - t2), 2)) + (1/6 * -jerk * Math.pow((time - t2), 3));
@@ -226,7 +231,7 @@ public class GraphingData {
 		}
 		double v3 = v;
 		double p3 = x; 
-		double distance_to_accelerate = (Math.pow(vmax, 2)) / (2 * a_avg);
+		double distance_to_accelerate = (Math.pow(maxVelocity, 2)) / (2 * a_avg);
 		System.out.println("Distance to accelerate " + distance_to_accelerate);
 		
 		/**
@@ -242,7 +247,7 @@ public class GraphingData {
 			acceleration = 0;
 			x = p3 + v3 * (time - t3);
 			x = round(x);
-			v = (vmax);
+			v = (maxVelocity);
 			v = round(v);
 			addData(time, v, x, acceleration);
 		}
@@ -256,7 +261,7 @@ public class GraphingData {
 		for (time = t4; time <= t5; time += clk) {
 			time = roundTime(time);
 			velocity_time_reference = roundTime(t7 - time);
-			acceleration = a_max - (jerk * (velocity_time_reference - t2));
+			acceleration = maxAccel - (jerk * (velocity_time_reference - t2));
 			acceleration = -round(acceleration);
 			v = v4 + (0.5 * -jerk * Math.pow((time - t4), 2));
 			v = round(v);
@@ -270,9 +275,9 @@ public class GraphingData {
 		for (time = t5 + clk; time <= t6; time += clk) {
 			time = roundTime(time);
 			velocity_time_reference = roundTime(t7 - time);
-			acceleration = a_max;
+			acceleration = maxAccel;
 			acceleration = -round(acceleration);
-			v = v5 - (a_max * (time - t5));
+			v = v5 - (maxAccel * (time - t5));
 			v = round(v);
 			x = p5 + (v5 * (time - t5)) + (0.5 * a5 * Math.pow((time - t5), 2));
 			x = round(x);
@@ -339,9 +344,9 @@ public class GraphingData {
 	 */
 	public static boolean isTriangular() {
 		double mid = distance/2;
-		double vFinal = Math.pow(2 * a_max * mid, 0.5);
-		if (vFinal < vmax){
-			vmax = vFinal;
+		double vFinal = Math.pow(2 * maxAccel * mid, 0.5);
+		if (vFinal < maxVelocity){
+			maxVelocity = vFinal;
 			return true;
 		} else {
 			return false;
