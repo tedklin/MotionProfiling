@@ -91,13 +91,13 @@ public class GraphingData {
 	 */
 	public static void setTestingValues() {
 		scan.close();
-		distance = 100;
-		maxAccel = 5;
-		maxDecel = -5;
+		distance = 6.878;
+		maxAccel = 4;
+		maxDecel = -4;
 		mode = 2;
 		a_avg = maxAccel;
-		maxVelocity = 10;
-		clk = 0.1;
+		maxVelocity = 8.25;
+		clk = 1/100;
 		jerk = Math.pow(maxAccel, 2) / maxVelocity;
 	}
 
