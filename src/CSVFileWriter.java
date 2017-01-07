@@ -53,7 +53,7 @@ public class CSVFileWriter {
 	public void writeToFile(){
 		int maxIterations = m_xAxisArray.size();
 		try {
-			FileWriter writer = new FileWriter(m_name);
+			FileWriter writer = new FileWriter("generated_profiles/" + m_name);
 			
 			//Headings
 			writer.append("Time");
