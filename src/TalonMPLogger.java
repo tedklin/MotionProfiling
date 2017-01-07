@@ -47,7 +47,7 @@ public class TalonMPLogger {
 				writer.append(",");
 				writer.append(String.valueOf(m_clk));
 				writer.append("},");
-				writer.append("\r");
+				writer.append('\n');
 			}
 			
 			writer.append("\t\t" + "{");
