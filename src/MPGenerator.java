@@ -1,4 +1,3 @@
-import java.util.Scanner;
 import java.util.ArrayList;
 
 /**
@@ -8,20 +7,20 @@ import java.util.ArrayList;
  *
  */
 
-public class GraphingData {
+public class MPGenerator {
 	
-	/**
-	 * Input data
-	 */
-	public static Scanner scan = new Scanner(System.in);
-	public static double distance;
-	public static double maxAccel;
-	public static double maxDecel;
-	public static double a_avg;
-	public static double maxVelocity;
-	public static double clk;
-	public static double jerk;
-	public static int mode;
+	public enum Mode {
+		ClassicTrapezoidal, TalonTrapezoidal, SCurve
+	}
+	public static Mode mode = Mode.TalonTrapezoidal;
+	
+	public static double distance = 5;
+	public static double maxAccel = 10;
+	public static double maxDecel = 10;
+	public static double a_avg = maxAccel;
+	public static double maxVelocity = 4;
+	public static double clk = 0.01;
+	public static double jerk = 0;
 	
 	/**
 	 * Data arrays
@@ -32,73 +31,32 @@ public class GraphingData {
 	public static ArrayList<Double> acceleration_data = new ArrayList<Double>();
 
 	public static void main(String[] args) {
-//		input();
-		setTestingValues();
 		System.out.println("Desired Distance: " + distance);
 		System.out.println("Max Acceleration: " + maxAccel);
 		System.out.println("Max Deceleration: " + maxDecel);
 		System.out.println("Max Velocity: " + maxVelocity);
 		System.out.println("Clock speed: " + clk);
 		
-		String name = null;
-		double final_time = 0;
-		if (mode == 1) {
-			final_time = scurveCalculations();
-			System.out.println("S Curve Motion Profile");
-			name = "SCurveProfile.csv";
-		} 
-		else if (mode == 2) {
-			final_time = trapezoidalCalculations();
+		double finalValue = 0;
+		if (mode == Mode.SCurve) {
+			System.out.println("S-Curve Motion Profile");
+			finalValue = (double)Math.round(scurveCalculations() * 1000) / 1000;
+			CSVFileWriter csvFileWriter = new CSVFileWriter("SCurveProfile.csv", time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
+			csvFileWriter.writeToFile();
+		} else if (mode == Mode.ClassicTrapezoidal) {
 			System.out.println("Trapezoidal Motion Profile");
-			name = "TrapezoidalProfile.csv";
-		} 
-		System.out.println("Calculations finished");
-		
-		double finalValue = (double)Math.round(final_time * 1000) / 1000;
-		CSVFileWriter csvFileWriter = new CSVFileWriter(name, time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
-		csvFileWriter.writeToFile();
-		System.out.println("Profile generated");
-	}
-	
-	/**
-	 * User input data
-	 */
-	public static void input() {
-		System.out.println("Input desired distance");
-		distance = scan.nextFloat();
-		System.out.println("Input max acceleration");
-		maxAccel = scan.nextFloat();
-		System.out.println("Input max deceleration");
-		maxDecel = scan.nextFloat();
-		System.out.println("Input mode (1 for pure s-curve, 2 for trapezoidal)");
-		mode = scan.nextInt();
-		if (mode == 1) {
-			a_avg = 0.5 * maxAccel;
-			jerk = (Math.pow(maxAccel, 2) * a_avg) / (maxVelocity * (maxAccel - a_avg));
-		} else if (mode == 2) {
-			a_avg = maxAccel;
-			jerk = 0;
+			finalValue = (double)Math.round(trapezoidalCalculations() * 1000) / 1000;
+			CSVFileWriter csvFileWriter = new CSVFileWriter("TrapezoidalProfile.csv", time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
+			csvFileWriter.writeToFile();
+		} else if (mode == Mode.TalonTrapezoidal) {
+			System.out.println("Talon Trapezoidal Motion Profile");
+			finalValue = (double)Math.round(trapezoidalCalculations() * 1000) / 1000;
+			TalonMPLogger talonLogger = new TalonMPLogger(distance_data, velocity_data, clk, finalValue, distance);
+			talonLogger.logData();
+		} else {
+			System.out.println("Please select a valid mode");
 		}
-		System.out.println("Input max velocity");
-		maxVelocity = scan.nextFloat();
-		System.out.println("Input clock speed");
-		clk = scan.nextFloat();
-		scan.close();
-	}
-	
-	/**
-	 * Set default testing parameters
-	 */
-	public static void setTestingValues() {
-		scan.close();
-		distance = 6.878;
-		maxAccel = 4;
-		maxDecel = -4;
-		mode = 2;
-		a_avg = maxAccel;
-		maxVelocity = 8.25;
-		clk = 1/100;
-		jerk = Math.pow(maxAccel, 2) / maxVelocity;
+		System.out.println("Profile Generated");
 	}
 
 	/**
@@ -165,7 +123,7 @@ public class GraphingData {
 		double tj;
 		double ta;
 		double tv;
-		if (mode == 1) {
+		if (mode == Mode.SCurve) {
 			tj = Math.pow((maxVelocity/jerk), 0.5);
 			ta = tj;
 			tv = distance/maxVelocity;
@@ -194,41 +152,41 @@ public class GraphingData {
 		 * S-curve acceleration
 		 */
 		for (time = 0; time <= t1; time += clk) {
-			time = roundTime(time);
+			time = roundThousandths(time);
 			acceleration = jerk * time;
-			acceleration = round(acceleration);
+			acceleration = roundHundredThousandths(acceleration);
 			v = (jerk * Math.pow(time, 2))/2;
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = (jerk * Math.pow(time, 3))/6;
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		double v1 = v;
 		double p1 = x;
 		double a1 = acceleration;
 		for (time = t1 + clk; time <= t2; time += clk) {
-			time = roundTime(time);
+			time = roundThousandths(time);
 			acceleration = maxAccel;
-			acceleration = round(acceleration);
+			acceleration = roundHundredThousandths(acceleration);
 			v = ((Math.pow(maxAccel, 2) / (2 * jerk))) + maxAccel * (time - t1);
 			v = v1 + (a1 * (time - t1));
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = p1 + (v1 * (time - t1)) + (0.5 * a1 * Math.pow((time - t1), 2));
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		double v2 = v;
 		double p2 = x;
 		double a2 = acceleration;
 		for (time = t2 + clk; time <= t3; time += clk) {
-			time = roundTime(time);
+			time = roundThousandths(time);
 			acceleration = maxAccel - (jerk * (time - t2));
-			acceleration = round(acceleration);
+			acceleration = roundHundredThousandths(acceleration);
 			v = maxVelocity - ((jerk * Math.pow((t3 - time), 2)) / 2);
 			v = v2 + (a2 * (time - t2)) + (0.5 * -jerk * Math.pow((time - t2), 2));
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = p2 + (v2 * (time - t2)) + (0.5 * a2 * Math.pow((time - t2), 2)) + (1/6 * -jerk * Math.pow((time - t2), 3));
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		double v3 = v;
@@ -241,16 +199,16 @@ public class GraphingData {
 		 */
 		double cruising_distance = distance - (2 * distance_to_accelerate);
 		System.out.println("Cruising distance: " + cruising_distance);
-		double distance_after_second_stage = round(distance_to_accelerate + cruising_distance);
+		double distance_after_second_stage = roundHundredThousandths(distance_to_accelerate + cruising_distance);
 		System.out.println("Distance after second stage: " + distance_after_second_stage);
 		
 		for (time = t3 + clk; time < t4; time += clk){
-			time = roundTime(time);
+			time = roundThousandths(time);
 			acceleration = 0;
 			x = p3 + v3 * (time - t3);
-			x = round(x);
+			x = roundHundredThousandths(x);
 			v = (maxVelocity);
-			v = round(v);
+			v = roundHundredThousandths(v);
 			addData(time, v, x, acceleration);
 		}
 		double v4 = v;
@@ -261,42 +219,42 @@ public class GraphingData {
 		 */
 		double velocity_time_reference;
 		for (time = t4; time <= t5; time += clk) {
-			time = roundTime(time);
-			velocity_time_reference = roundTime(t7 - time);
+			time = roundThousandths(time);
+			velocity_time_reference = roundThousandths(t7 - time);
 			acceleration = maxAccel - (jerk * (velocity_time_reference - t2));
-			acceleration = -round(acceleration);
+			acceleration = -roundHundredThousandths(acceleration);
 			v = v4 + (0.5 * -jerk * Math.pow((time - t4), 2));
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = p4 + (v4 * (time - t4)) + (1/6 * -jerk * Math.pow((time - t4), 3));
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		double v5 = v;
 		double p5 = x;
 		double a5 = acceleration;
 		for (time = t5 + clk; time <= t6; time += clk) {
-			time = roundTime(time);
-			velocity_time_reference = roundTime(t7 - time);
+			time = roundThousandths(time);
+			velocity_time_reference = roundThousandths(t7 - time);
 			acceleration = maxAccel;
-			acceleration = -round(acceleration);
+			acceleration = -roundHundredThousandths(acceleration);
 			v = v5 - (maxAccel * (time - t5));
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = p5 + (v5 * (time - t5)) + (0.5 * a5 * Math.pow((time - t5), 2));
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		double v6 = v;
 		double p6 = x;
 		double a6 = acceleration;
 		for (time = t6 + clk; time <= t7; time += clk) {
-			time = roundTime(time);
-			velocity_time_reference = roundTime(t7 - time);
+			time = roundThousandths(time);
+			velocity_time_reference = roundThousandths(t7 - time);
 			acceleration = jerk * velocity_time_reference;
-			acceleration = -round(acceleration);
+			acceleration = -roundHundredThousandths(acceleration);
 			v = v6 + (a6 * (time - t6)) + (0.5 * jerk * Math.pow((time - t6), 2));
-			v = round(v);
+			v = roundHundredThousandths(v);
 			x = p6 + (v6 * (time - t6)) + (0.5 * a6 * Math.pow((time - t6), 2)) + (1/6 * jerk * Math.pow((time - t6), 3));
-			x = round(x);
+			x = roundHundredThousandths(x);
 			addData(time, v, x, acceleration);
 		}
 		
@@ -319,23 +277,15 @@ public class GraphingData {
 		acceleration_data.add(acceleration);
 	}
 	
-	/**
-	 * Round a value to the hundred thousandths place
-	 * 
-	 * @param value
-	 * @return rounded value
-	 */
-	public static double round(double value) {
+	public static double roundALot(double value) {
+		return (double)Math.round(value * 1000000000) / 1000000000;
+	}
+	
+	public static double roundHundredThousandths(double value) {
 		return (double)Math.round(value * 100000) / 100000;
 	}
 	
-	/**
-	 * Round a value to the thousandths place
-	 * 
-	 * @param value
-	 * @return
-	 */
-	public static double roundTime(double value) {
+	public static double roundThousandths(double value) {
 		return (double)Math.round(value * 1000) / 1000;
 	}
 	

@@ -12,6 +12,7 @@ import java.util.ArrayList;
  * Modified by tedfoodlin
  * 
  */
+
 public class CSVFileWriter {
 	
 	private String m_name;
