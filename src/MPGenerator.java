@@ -16,7 +16,7 @@ public class MPGenerator {
 	
 	public static double distance = 5;
 	public static double maxAccel = 10;
-	public static double maxDecel = 10;
+	public static double maxDecel = -10;
 	public static double a_avg = maxAccel;
 	public static double maxVelocity = 4;
 	public static double clk = 0.01;
@@ -51,7 +51,7 @@ public class MPGenerator {
 		} else if (mode == Mode.TalonTrapezoidal) {
 			System.out.println("Talon Trapezoidal Motion Profile");
 			finalValue = (double)Math.round(trapezoidalCalculations() * 1000) / 1000;
-			TalonMPLogger talonLogger = new TalonMPLogger(distance_data, velocity_data, clk, finalValue, distance);
+			TalonMPLogger talonLogger = new TalonMPLogger(distance_data, velocity_data, clk, distance);
 			talonLogger.logData();
 		} else {
 			System.out.println("Please select a valid mode");
