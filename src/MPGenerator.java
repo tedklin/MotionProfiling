@@ -14,12 +14,13 @@ public class MPGenerator {
 	}
 	public static Mode mode = Mode.TalonTrapezoidal;
 	
-	public static double distance = 5;
-	public static double maxAccel = 10;
-	public static double maxDecel = -10;
+	public static double distance = 30.93;
+	public static double maxAccel = 51.56*3600;
+	public static double maxDecel = -maxAccel;
 	public static double a_avg = maxAccel;
-	public static double maxVelocity = 4;
-	public static double clk = 0.01;
+	public static double maxVelocity = 10000;
+	public static double clk = 10;
+	public static double clkInMinutes = clk/60000;
 	public static double jerk = 0;
 	
 	/**
@@ -73,7 +74,8 @@ public class MPGenerator {
 		
 		double accelTime = maxVelocity/maxAccel;
 		System.out.println("Acceleration Time: " + accelTime);
-		double accelAndCruiseTime = distance/maxVelocity;
+//		double accelAndCruiseTime = distance/maxVelocity;
+		double accelAndCruiseTime = (distance/maxVelocity)+accelTime;
 		System.out.println("Acceleration + Cruise Time: " + accelAndCruiseTime);
 		double decelTime = -maxVelocity/maxDecel;
 		System.out.println("Deceleration Time: " + decelTime);
@@ -81,24 +83,22 @@ public class MPGenerator {
 		System.out.println("Expected End Time: " + end);
 		
 		boolean triangular = isTriangular();
-		for (time = 0; time < accelTime; time += clk){
+		for (time = 0; time < accelTime; time += clkInMinutes){
 			x = (0.5 * maxAccel * Math.pow(time, (double)2));
 			v = maxAccel * time;
 			addData(time, v, x, maxAccel);
 		}
-		if (triangular == false){
-			for (time = accelTime; time < accelAndCruiseTime; time += clk){
+//		if (triangular == false){
+			for (time = accelTime; time < accelAndCruiseTime; time += clkInMinutes){
 				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
-				v = (maxVelocity);
+				v = (10000);
 				addData(time, v, x, 0);
 			}
-		}
-		for (time = accelAndCruiseTime; time <= end; time += clk){
+//		}
+		for (time = accelAndCruiseTime; time <= end; time += clkInMinutes){
 			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
-			v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
-			if (v < 0.0001) {
-				v = 0;
-			}
+			//v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
+			v = -maxAccel*time+(10000+maxAccel*accelAndCruiseTime);
 			addData(time, v, x, maxDecel);
 		}
 		System.out.println("Actual time to finish motion: " + time);
