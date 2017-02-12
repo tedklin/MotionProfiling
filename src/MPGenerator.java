@@ -91,14 +91,14 @@ public class MPGenerator {
 //		if (triangular == false){
 			for (time = accelTime; time < accelAndCruiseTime; time += clkInMinutes){
 				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
-				v = (10000);
+				v = (1241);
 				addData(time, v, x, 0);
 			}
 //		}
 		for (time = accelAndCruiseTime; time <= end; time += clkInMinutes){
 			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
 			//v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
-			v = -maxAccel*time+(10000+maxAccel*accelAndCruiseTime);
+			v = -maxAccel*time+(1241+maxAccel*accelAndCruiseTime);
 			addData(time, v, x, maxDecel);
 		}
 		System.out.println("Actual time to finish motion: " + time);
