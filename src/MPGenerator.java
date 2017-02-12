@@ -18,7 +18,7 @@ public class MPGenerator {
 	public static double maxAccel = 51.56*3600;
 	public static double maxDecel = -maxAccel;
 	public static double a_avg = maxAccel;
-	public static double maxVelocity = 10000;
+	public static double maxVelocity = 1241;
 	public static double clk = 10;
 	public static double clkInMinutes = clk/60000;
 	public static double jerk = 0;
