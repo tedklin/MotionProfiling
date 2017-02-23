@@ -9,11 +9,14 @@ import java.util.ArrayList;
 
 public class MPGenerator {
 	
+	// ClassicTrapezoidal and SCurve generate CSV files
+	// TalonTrapezoidal generates 2D array for direct use with TalonControlMode MotionProfile
 	public enum Mode {
 		ClassicTrapezoidal, TalonTrapezoidal, SCurve
 	}
-	public static Mode mode = Mode.TalonTrapezoidal;
+	public static Mode mode = Mode.ClassicTrapezoidal;
 	
+	// Parameters: distance (rotations), acceleration (rot/min^2), maxVelocity (rpm), clk (ms)
 	public static double distance = 30.93;
 	public static double maxAccel = 51.56*3600;
 	public static double maxDecel = -maxAccel;
@@ -23,9 +26,6 @@ public class MPGenerator {
 	public static double clkInMinutes = clk/60000;
 	public static double jerk = 0;
 	
-	/**
-	 * Data arrays
-	 */
 	public static ArrayList<Double> time_data = new ArrayList<Double>();
 	public static ArrayList<Double> velocity_data = new ArrayList<Double>();
 	public static ArrayList<Double> distance_data = new ArrayList<Double>();
@@ -42,12 +42,14 @@ public class MPGenerator {
 		if (mode == Mode.SCurve) {
 			System.out.println("S-Curve Motion Profile");
 			finalValue = (double)Math.round(scurveCalculations() * 1000) / 1000;
-			CSVFileWriter csvFileWriter = new CSVFileWriter("SCurveProfile.csv", time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
+			CSVFileWriter csvFileWriter = new CSVFileWriter("SCurveProfile.csv", 
+					time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
 			csvFileWriter.writeToFile();
 		} else if (mode == Mode.ClassicTrapezoidal) {
 			System.out.println("Trapezoidal Motion Profile");
 			finalValue = (double)Math.round(trapezoidalCalculations() * 1000) / 1000;
-			CSVFileWriter csvFileWriter = new CSVFileWriter("TrapezoidalProfile.csv", time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
+			CSVFileWriter csvFileWriter = new CSVFileWriter("TrapezoidalProfile.csv", 
+					time_data, velocity_data, distance_data, acceleration_data, finalValue, distance);
 			csvFileWriter.writeToFile();
 		} else if (mode == Mode.TalonTrapezoidal) {
 			System.out.println("Talon Trapezoidal Motion Profile");
@@ -74,13 +76,14 @@ public class MPGenerator {
 		
 		double accelTime = maxVelocity/maxAccel;
 		System.out.println("Acceleration Time: " + accelTime);
-//		double accelAndCruiseTime = distance/maxVelocity;
-		double accelAndCruiseTime = (distance/maxVelocity)+accelTime;
+		double cruiseTime = (distance - (accelTime * maxVelocity)) / maxVelocity;
+		System.out.println("Cruise Time: " + cruiseTime);
+		double accelAndCruiseTime = accelTime + cruiseTime;
 		System.out.println("Acceleration + Cruise Time: " + accelAndCruiseTime);
 		double decelTime = -maxVelocity/maxDecel;
 		System.out.println("Deceleration Time: " + decelTime);
-		double end = accelAndCruiseTime + decelTime;
-		System.out.println("Expected End Time: " + end);
+		double totalTime = accelTime + cruiseTime + decelTime;
+		System.out.println("Expected End Time: " + totalTime);
 		
 		boolean triangular = isTriangular();
 		for (time = 0; time < accelTime; time += clkInMinutes){
@@ -88,17 +91,16 @@ public class MPGenerator {
 			v = maxAccel * time;
 			addData(time, v, x, maxAccel);
 		}
-//		if (triangular == false){
+		if (triangular == false){
 			for (time = accelTime; time < accelAndCruiseTime; time += clkInMinutes){
 				x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity/maxAccel)));
-				v = (1241);
+				v = (maxVelocity);
 				addData(time, v, x, 0);
 			}
-//		}
-		for (time = accelAndCruiseTime; time <= end; time += clkInMinutes){
-			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-end), 2));
-			//v = maxVelocity + maxDecel * (time - accelAndCruiseTime);
-			v = -maxAccel*time+(1241+maxAccel*accelAndCruiseTime);
+		}
+		for (time = accelAndCruiseTime; time <= totalTime; time += clkInMinutes){
+			x = (double)(distance + 0.5 * maxDecel * Math.pow((time-totalTime), 2));
+			v = -maxAccel * time + (maxVelocity + maxAccel * accelAndCruiseTime);
 			addData(time, v, x, maxDecel);
 		}
 		System.out.println("Actual time to finish motion: " + time);
@@ -263,7 +265,7 @@ public class MPGenerator {
 	}
 	
 	/**
-	 * Adds data to array lists
+	 * Add data to array lists
 	 * 
 	 * @param time
 	 * @param velocity
