@@ -15,7 +15,7 @@ public class MPGenerator {
 	ClassicTrapezoidal, TalonTrapezoidal, SCurve
     }
 
-    public static Mode mode = Mode.SCurve;
+    public static Mode mode = Mode.ClassicTrapezoidal;
 
     // Parameters: distance (rotations), acceleration (rot/min^2), maxVelocity
     // (rpm), clk (ms)
@@ -23,7 +23,7 @@ public class MPGenerator {
     public static double maxAccel = 51.56 * 3600;
     public static double maxDecel = -maxAccel;
     public static double a_avg = maxAccel;
-    public static double maxVelocity = 1241;
+    public static double maxVelocity = 12410;
     public static double clk = 10;
     public static double clkInMinutes = clk / 60000;
     public static double jerk = 0;
@@ -75,28 +75,33 @@ public class MPGenerator {
 	double v = 0;
 
 	double accelTime = maxVelocity / maxAccel;
-	System.out.println("Acceleration Time: " + accelTime);
 	double cruiseTime = (distance - (accelTime * maxVelocity)) / maxVelocity;
-	System.out.println("Cruise Time: " + cruiseTime);
 	double accelAndCruiseTime = accelTime + cruiseTime;
-	System.out.println("Acceleration + Cruise Time: " + accelAndCruiseTime);
 	double decelTime = -maxVelocity / maxDecel;
-	System.out.println("Deceleration Time: " + decelTime);
 	double totalTime = accelTime + cruiseTime + decelTime;
-	System.out.println("Expected End Time: " + totalTime);
 
 	boolean triangular = isTriangular();
+	if (triangular) {
+	    accelTime = maxVelocity / maxAccel;
+	    cruiseTime = (distance - (accelTime * maxVelocity)) / maxVelocity;
+	    accelAndCruiseTime = accelTime + cruiseTime;
+	    decelTime = -maxVelocity / maxDecel;
+	    totalTime = accelTime + cruiseTime + decelTime;
+	}
+	System.out.println("Acceleration Time: " + accelTime);
+	System.out.println("Cruise Time: " + cruiseTime);
+	System.out.println("Acceleration + Cruise Time: " + accelAndCruiseTime);
+	System.out.println("Deceleration Time: " + decelTime);
+	System.out.println("Expected End Time: " + totalTime);
 	for (time = 0; time < accelTime; time += clkInMinutes) {
 	    x = (0.5 * maxAccel * Math.pow(time, (double) 2));
 	    v = maxAccel * time;
 	    addData(time, v, x, maxAccel);
 	}
-	if (triangular == false) {
-	    for (time = accelTime; time < accelAndCruiseTime; time += clkInMinutes) {
-		x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity / maxAccel)));
-		v = (maxVelocity);
-		addData(time, v, x, 0);
-	    }
+	for (time = accelTime; time < accelAndCruiseTime; time += clkInMinutes) {
+	    x = (0.5 * (Math.pow(maxVelocity, 2) / maxAccel)) + (maxVelocity * (time - (maxVelocity / maxAccel)));
+	    v = (maxVelocity);
+	    addData(time, v, x, 0);
 	}
 	for (time = accelAndCruiseTime; time <= totalTime; time += clkInMinutes) {
 	    x = (double) (distance + 0.5 * maxDecel * Math.pow((time - totalTime), 2));
@@ -304,7 +309,7 @@ public class MPGenerator {
 	double mid = distance / 2;
 	double vFinal = Math.pow(2 * maxAccel * mid, 0.5);
 	if (vFinal < maxVelocity) {
-	    maxVelocity = vFinal - (maxVelocity / 10);
+	    maxVelocity = vFinal;
 	    return true;
 	} else {
 	    return false;
